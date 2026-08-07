@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adventure Browser 3.1.1</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header id="toolbar">
+      <div class="toolbar-section toolbar-left">
+        <div class="browser-controls">
+          <button id="backButton" title="Back" disabled>←</button>
+          <button id="forwardButton" title="Forward" disabled>→</button>
+          <button id="reloadButton" title="Reload">↻</button>
+          <button id="stopButton" title="Stop">✕</button>
+        </div>
+      </div>
+    </header>
+
+    <div id="tabBar" class="tab-bar" aria-label="Open tabs">
+      <form id="addressForm" class="address-form tab-bar-address-form" autocomplete="off">
+        <label class="sr-only" for="addressInput">Address bar</label>
+        <input id="addressInput" type="text" spellcheck="false" placeholder="Search or enter address" />
+      </form>
+      <div class="tab-bar-scroll">
+        <div id="tabBarContent" class="tab-bar-content"></div>
+      </div>
+      <div class="tab-bar-actions">
+        <button id="assistantButton" class="tab-bar-action" title="AI Assistant">🤖</button>
+        <button id="bookmarkButton" class="tab-bar-action" title="Bookmark current page">☆</button>
+        <button id="settingsButton" class="tab-bar-action" title="Settings">⚙️</button>
+        <button id="tabBarNewButton" class="tab-bar-add" title="New Tab">＋</button>
+      </div>
+    </div>
+
+    <div id="layout">
+      <div class="browser-shell">
+        <main id="browserContainer"></main>
+      </div>
+    </div>
+
+    <button id="focusButton" class="focus-toggle" title="Focus Mode">Focus Mode</button>
+    <div id="tabContextMenu" class="context-menu" aria-hidden="true"></div>
+  </div>
+
+  <template id="aboutHomeTemplate">
+    <section class="about-page home-page">
+      <div class="home-hero card">
+        <div>
+          <p class="eyebrow">Welcome back</p>
+          <h1>Rainforest browsing</h1>
+          <p class="hero-copy">A calm, green start page for quick access, recent history, and clear browser stats.</p>
+        </div>
+        <form class="home-search" data-action="home-search">
+          <input name="q" type="search" placeholder="Search the web or enter a URL" aria-label="Search" />
+          <button type="submit">Search</button>
+        </form>
+      </div>
+
+      <div class="home-grid home-grid-simple">
+        <section class="card home-panel home-shortcuts">
+          <div class="panel-header"><h2>Quick access</h2><span>Built-in pages and tools</span></div>
+          <div class="shortcut-grid">
+            <button data-open="about:downloads">Downloads</button>
+            <button data-open="about:bookmarks">Bookmarks</button>
+            <button data-open="about:history">History</button>
+            <button data-open="about:recentlyclosed">Recently Closed</button>
+            <button data-open="about:game">Bug Hunt</button>
+            <button data-open="about:assistant">AI Assistant</button>
+          </div>
+        </section>
+
+        <section class="card home-panel home-stats">
+          <div class="panel-header"><h2>Browser statistics</h2><button data-refresh="stats">Refresh</button></div>
+          <div class="stats-grid">
+            <div><strong id="homeStatsPages">0</strong><span>Pages visited</span></div>
+            <div><strong id="homeStatsTabs">0</strong><span>Tabs opened</span></div>
+            <div><strong id="homeStatsBookmarks">0</strong><span>Bookmarks</span></div>
+            <div><strong id="homeStatsDownloads">0</strong><span>Downloads</span></div>
+          </div>
+        </section>
+
+
+        <section class="card home-panel home-history">
+          <div class="panel-header"><h2>Recent history</h2><button data-open="about:history">View all</button></div>
+          <div id="homeHistoryList" class="item-list"></div>
+        </section>
+      </div>
+    </section>
+  </template>
+
+  <template id="aboutDownloadsTemplate">
+    <section class="about-page internal-page">
+      <div class="page-header">
+        <div>
+          <p class="eyebrow">Download Manager</p>
+          <h1>Active downloads</h1>
+          <p>Track your files, progress, and complete history in one place.</p>
+        </div>
+        <div class="page-controls">
+          <button data-action="new-download">New download</button>
+          <button data-action="clear-downloads">Clear history</button>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="list-toolbar">
+          <input id="downloadSearch" placeholder="Search downloads" />
+          <select id="downloadSort">
+            <option value="recent">Newest</option>
+            <option value="completed">Completed</option>
+            <option value="active">Active</option>
+          </select>
+        </div>
+        <div id="downloadList" class="download-list"></div>
+      </div>
+    </section>
+  </template>
+
+  <template id="aboutBookmarksTemplate">
+    <section class="about-page internal-page">
+      <div class="page-header">
+        <div>
+          <p class="eyebrow">Bookmarks</p>
+          <h1>Your bookmarks</h1>
+          <p>Search, organize, and revisit your favorite pages in seconds.</p>
+        </div>
+        <div class="page-controls">
+          <button data-action="add-bookmark">Bookmark current tab</button>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="bookmark-toolbar">
+          <input id="bookmarkSearch" type="search" placeholder="Search bookmarks" />
+          <select id="bookmarkSort">
+            <option value="recent">Recently added</option>
+            <option value="alpha">Alphabetical</option>
+            <option value="favorite">Favorites</option>
+          </select>
+          <select id="bookmarkFolderFilter">
+            <option value="all">All folders</option>
+            <option value="Bookmarks Bar">Bookmarks Bar</option>
+            <option value="Reading List">Reading List</option>
+            <option value="School">School</option>
+            <option value="Development">Development</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Custom">Custom</option>
+          </select>
+        </div>
+        <div class="bookmark-list" id="bookmarkList"></div>
+      </div>
+    </section>
+  </template>
+
+  <template id="aboutPasswordsTemplate">
+    <section class="about-page internal-page password-page">
+      <div class="page-header">
+        <div>
+          <p class="eyebrow">Password Manager</p>
+          <h1>Secure sign-in vault</h1>
+          <p>Save, organize, search, and safely reuse credentials without duplicating entries.</p>
+        </div>
+        <div class="page-controls">
+          <button data-action="save-password-inline">Save current page</button>
+        </div>
+      </div>
+      <div class="section-card password-manager-grid">
+        <form id="passwordForm" class="password-form">
+          <input id="passwordSite" type="text" placeholder="Website or URL" required />
+          <input id="passwordUsername" type="text" placeholder="Username / Email" required />
+          <input id="passwordValue" type="password" placeholder="Password" required />
+          <button type="submit">Save credential</button>
+        </form>
+        <div class="password-tools">
+          <input id="passwordSearch" type="search" placeholder="Search passwords" />
+          <div class="password-actions-row">
+            <button data-action="export-passwords">Export</button>
+            <button data-action="import-passwords">Import</button>
+            <button data-action="clear-passwords">Clear all</button>
+          </div>
+        </div>
+        <div class="password-health" id="passwordHealth"></div>
+        <div id="passwordList" class="password-list"></div>
+      </div>
+    </section>
+  </template>
+
+  <template id="aboutHistoryTemplate">
+    <section class="about-page internal-page">
+      <div class="page-header">
+        <div>
+          <p class="eyebrow">History</p>
+          <h1>Recently visited</h1>
+          <p>Review your browsing history and reopen pages quickly.</p>
+        </div>
+        <div class="page-controls">
+          <button data-action="clear-history">Clear history</button>
+        </div>
+      </div>
+      <div class="section-card">
+        <div id="historyList" class="item-list"></div>
+      </div>
+    </section>
+  </template>
+
+  <template id="aboutRecentlyClosedTemplate">
+    <section class="about-page internal-page">
+      <div class="page-header">
+        <div>
+          <p class="eyebrow">Recently Closed</p>
+          <h1>Restore recently closed tabs</h1>
+          <p>Reopen pages, preserve their tab group association, and recover a session quickly.</p>
+        </div>
+        <div class="page-controls">
+          <button data-action="restore-all-closed">Restore all</button>
+          <button data-action="clear-closed-history">Clear history</button>
+        </div>
+      </div>
+      <div class="section-card">
+        <div id="recentlyClosedList" class="item-list"></div>
+      </div>
+    </section>
+  </template>
+
+  <template id="aboutSettingsTemplate">
+    <section class="about-page internal-page settings-page">
+      <div class="page-header">
+        <div>
+          <p class="eyebrow">Settings</p>
+          <h1>Personalize Adventure</h1>
+          <p>Fast, persistent personalization for browsing, privacy, account tools, and performance.</p>
+        </div>
+      </div>
+
+      <div class="settings-shell">
+        <aside class="settings-sidebar">
+          <input id="settingsSearch" type="search" placeholder="Search settings" />
+          <div class="settings-category-list">
+            <button class="settings-category active" data-settings-category="general">General</button>
+            <button class="settings-category" data-settings-category="appearance">Appearance</button>
+            <button class="settings-category" data-settings-category="downloads">Downloads</button>
+            <button class="settings-category" data-settings-category="privacy">Privacy</button>
+            <button class="settings-category" data-settings-category="passwords">Passwords</button>
+            <button class="settings-category" data-settings-category="bookmarks">Bookmarks</button>
+            <button class="settings-category" data-settings-category="tabs">Tabs</button>
+            <button class="settings-category" data-settings-category="performance">Performance</button>
+            <button class="settings-category" data-settings-category="accessibility">Accessibility</button>
+            <button class="settings-category" data-settings-category="advanced">Advanced</button>
+            <button class="settings-category" data-settings-category="about">About</button>
+          </div>
+          <div class="settings-actions-row">
+            <button data-action="import-settings">Import</button>
+            <button data-action="export-settings">Export</button>
+            <button data-action="reset-settings">Reset</button>
+          </div>
+        </aside>
+
+        <div class="settings-grid">
+          <section class="settings-card" data-settings-group="general">
+            <h2>General</h2>
+            <label><input type="checkbox" id="focusModeToggle" /> Focus Mode</label>
+            <label><input type="checkbox" id="safeModeToggle" /> Block distracting pages</label>
+            <label><input type="checkbox" id="searchSuggestionsToggle" /> Search suggestions</label>
+            <label><input type="checkbox" id="startupHomeToggle" /> Open home on startup</label>
+            <label><input type="checkbox" id="sessionRestoreToggle" /> Session restore</label>
+          </section>
+
+          <section class="settings-card" data-settings-group="appearance">
+            <h2>Appearance</h2>
+            <label>Theme</label>
+            <div class="radio-group">
+              <label><input name="theme" type="radio" value="light" /> Light</label>
+              <label><input name="theme" type="radio" value="dark" /> Dark</label>
+            </div>
+            <label>Accent</label>
+            <select id="accentSelect">
+              <option value="classic">Classic</option>
+              <option value="jungle">Jungle</option>
+              <option value="midnight">Midnight</option>
+              <option value="ocean">Ocean</option>
+              <option value="sunset">Sunset</option>
+            </select>
+            <label><input type="checkbox" id="reduceMotionToggle" /> Reduce motion</label>
+          </section>
+
+          <section class="settings-card" data-settings-group="downloads">
+            <h2>Downloads</h2>
+            <label><input type="checkbox" id="downloadPromptToggle" /> Prompt before download</label>
+            <label><input type="checkbox" id="downloadCompleteToastToggle" /> Show completion toasts</label>
+            <label>Download location <input id="downloadLocationInput" type="text" placeholder="Downloads" /></label>
+          </section>
+
+          <section class="settings-card" data-settings-group="privacy">
+            <h2>Privacy</h2>
+            <label><input type="checkbox" id="clearHistoryOnExitToggle" /> Clear history on exit</label>
+            <label><input type="checkbox" id="trackingProtectionToggle" /> Tracking protection</label>
+            <label><input type="checkbox" id="rememberPasswordsToggle" /> Remember saved passwords</label>
+          </section>
+
+          <section class="settings-card" data-settings-group="passwords">
+            <h2>Passwords</h2>
+            <label><input type="checkbox" id="passwordManagerEnabledToggle" /> Enable Password Manager</label>
+            <label><input type="checkbox" id="passwordAuditToggle" /> Password health checks</label>
+            <label><input type="checkbox" id="passwordAutoFillToggle" /> Auto-fill on saved sites</label>
+          </section>
+
+          <section class="settings-card" data-settings-group="bookmarks">
+            <h2>Bookmarks</h2>
+            <label><input type="checkbox" id="bookmarksBarToggle" /> Show bookmarks bar</label>
+            <label><input type="checkbox" id="bookmarkFavoriteToggle" /> Favorite bookmarks by default</label>
+            <label><input type="checkbox" id="bookmarkSyncToggle" /> Sync browser bookmarks</label>
+          </section>
+
+          <section class="settings-card" data-settings-group="tabs">
+            <h2>Tabs</h2>
+            <label><input type="checkbox" id="tabGroupsEnabledToggle" /> Enable tab groups</label>
+            <label><input type="checkbox" id="tabSearchToggle" /> Enable tab search</label>
+            <label><input type="checkbox" id="pinTabsDefaultToggle" /> Pin new tabs by default</label>
+            <label><input type="checkbox" id="showFaviconsToggle" /> Show favicons</label>
+            <label><input type="checkbox" id="showCloseButtonsToggle" /> Show close buttons</label>
+          </section>
+
+          <section class="settings-card" data-settings-group="performance">
+            <h2>Performance</h2>
+            <label><input type="checkbox" id="hardwareAccelerationToggle" /> Hardware acceleration</label>
+            <label><input type="checkbox" id="lazyLoadToggle" /> Lazy-load heavy pages</label>
+            <label>Cache size <input id="cacheSizeInput" type="range" min="64" max="640" step="32" /></label>
+          </section>
+
+          <section class="settings-card" data-settings-group="accessibility">
+            <h2>Accessibility</h2>
+            <label><input type="checkbox" id="contrastModeToggle" /> High contrast mode</label>
+            <label><input type="checkbox" id="largeTextToggle" /> Large text</label>
+            <label><input type="checkbox" id="keyboardShortcutsToggle" /> Keyboard shortcuts hints</label>
+          </section>
+
+          <section class="settings-card" data-settings-group="advanced">
+            <h2>Advanced</h2>
+            <label><input type="checkbox" id="debugModeToggle" /> Developer debug mode</label>
+            <label><input type="checkbox" id="safeBrowsingToggle" /> Safe browsing</label>
+            <label><input type="checkbox" id="disableAnimationsToggle" /> Disable non-essential animations</label>
+          </section>
+
+          <section class="settings-card" data-settings-group="about">
+            <h2>About</h2>
+            <p class="settings-about-copy">Adventure Browser 3.0.0 is a polished browser shell with smarter navigation, faster startup, and a clean new tab experience.</p>
+          </section>
+
+          <div class="settings-actions">
+            <button data-action="save-settings">Save settings</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </template>
+
+  <template id="aboutStatsTemplate">
+    <section class="about-page internal-page stats-page">
+      <div class="page-header">
+        <div>
+          <p class="eyebrow">Statistics</p>
+          <h1>Browser analytics</h1>
+          <p>Track sessions, performance, and browser usage.</p>
+        </div>
+      </div>
+      <div class="stats-grid-large">
+        <div class="stat-card"><span>Pages</span><strong id="statsPages">0</strong></div>
+        <div class="stat-card"><span>Tabs opened</span><strong id="statsTabs">0</strong></div>
+        <div class="stat-card"><span>Downloads</span><strong id="statsDownloads">0</strong></div>
+        <div class="stat-card"><span>Bugs eaten</span><strong id="statsBugs">0</strong></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-row"><span>AI Conversations</span><div id="statsAiBar" class="chart-bar"></div></div>
+        <div class="chart-row"><span>Games played</span><div id="statsGamesBar" class="chart-bar"></div></div>
+        <div class="chart-row"><span>Bookmarks</span><div id="statsBookmarksBar" class="chart-bar"></div></div>
+      </div>
+    </section>
+  </template>
+
+  <template id="aboutAchievementsTemplate">
+    <section class="about-page internal-page achievements-page">
+      <div class="page-header">
+        <div>
+          <p class="eyebrow">Achievements</p>
+          <h1>Milestones unlocked</h1>
+          <p>Complete activities and earn Adventure Browser badges.</p>
+        </div>
+      </div>
+      <div id="achievementList" class="achievement-grid"></div>
+    </section>
+  </template>
+
+
+  <template id="aboutGameTemplate">
+    <section class="about-page internal-page game-page">
+      <div class="page-header">
+        <div>
+          <p class="eyebrow">Bug Hunt</p>
+          <h1>Catch the bugs</h1>
+          <p>Move the bug catcher with your mouse, eat bugs, and build a combo for high score.</p>
+        </div>
+      </div>
+      <div class="game-status-panel">
+        <div class="game-card"><span>Score</span><strong id="gameScore">0</strong></div>
+        <div class="game-card"><span>High score</span><strong id="gameHighScore">0</strong></div>
+        <div class="game-card"><span>Combo</span><strong id="gameCombo">0</strong></div>
+        <div class="game-controls">
+          <button data-action="start-game">Start</button>
+          <button data-action="stop-game">Stop</button>
+          <button data-action="toggle-sound">Mute</button>
+        </div>
+      </div>
+      <div id="gameBoard" class="game-board"></div>
+      <div class="game-footer">
+        <span>Golden bugs give bonus points. Rainbow bugs are rare!</span>
+      </div>
+    </section>
+  </template>
+
+  <template id="aboutWhatsNewTemplate">
+    <section class="about-page internal-page whatsnew-page">
+      <div class="page-header">
+        <div>
+          <p class="eyebrow">Release notes</p>
+          <h1>Adventure Browser 3.0.0</h1>
+          <p>Sharper browsing, smarter search, and a refreshed start experience.</p>
+        </div>
+      </div>
+      <div class="section-card release-notes">
+        <h2>✨ New Features</h2>
+        <ul>
+          <li>Built-in assistant</li>
+          <li>Download Manager</li>
+          <li>Bug Hunt Mini-Game</li>
+          <li>Browser Statistics</li>
+          <li>Achievement System</li>
+          <li>Themes and Focus Mode</li>
+        </ul>
+        <h2>🐞 Fixes</h2>
+        <ul>
+          <li>Improved startup performance</li>
+          <li>Faster page loading</li>
+          <li>Better memory usage</li>
+          <li>UI polish</li>
+          <li>Fixed scrolling bugs</li>
+          <li>Improved tab performance</li>
+        </ul>
+      </div>
+    </section>
+  </template>
+
+  <template id="aboutAssistantTemplate">
+    <section class="about-page internal-page assistant-page">
+      <div class="page-header">
+        <div>
+          <p class="eyebrow">AI Assistant</p>
+          <h1>Built-in assistant</h1>
+          <p>Get help with your browsing, code, writing, and page summaries.</p>
+        </div>
+      </div>
+      <div class="assistant-card">
+        <div class="assistant-panel" id="internalAssistantPanel">
+          <div class="assistant-message system">Ask the assistant for code explanations, webpage summaries, or browser help.</div>
+        </div>
+        <form id="assistantPageForm" class="assistant-page-input">
+          <input id="assistantPageInput" type="text" placeholder="Ask the assistant..." autocomplete="off" />
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </section>
+  </template>
+
+  <script type="module" src="renderer.js"></script>
+</body>
+</html>

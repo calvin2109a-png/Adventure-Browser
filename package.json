@@ -1,0 +1,62 @@
+{
+  "name": "adventure-browser",
+  "version": "3.1.1",
+  "description": "Adventure Browser 3.1.1 — polished desktop browser shell with smarter navigation and cleaner browsing.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "mac": "electron-builder --mac --publish never",
+    "win": "electron-builder --win --publish never",
+    "dist": "electron-builder --publish always"
+  },
+  "build": {
+    "appId": "com.adventurebrowser.app",
+    "productName": "Adventure Browser",
+    "icon": "icon.png",
+    "files": [
+      "**/*",
+      "!node_modules/**/*",
+      "node_modules/fs-extra/**",
+      "node_modules/js-yaml/**",
+      "node_modules/lazy-val/**",
+      "node_modules/lodash.escaperegexp/**",
+      "node_modules/lodash.isequal/**",
+      "node_modules/semver/**",
+      "node_modules/tiny-typed-emitter/**",
+      "node_modules/builder-util-runtime/**"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "protocols": [
+      {
+        "name": "Adventure Browser",
+        "schemes": ["http", "https"]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "electron": "^26.0.0",
+    "electron-builder": "^24.13.3"
+  }
+}

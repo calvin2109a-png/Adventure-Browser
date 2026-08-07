@@ -1,0 +1,30 @@
+{
+  "version": "3.0.0",
+  "releaseDate": "2026-08-05",
+  "changelog": [
+    {
+      "type": "New Features",
+      "items": [
+        "Built-in automatic update checks and one-click desktop updates.",
+        "Add an Update Center page for status, release notes, and install actions."
+      ]
+    },
+    {
+      "type": "Improvements",
+      "items": [
+        "Resume-ready update workflow with background progress reporting.",
+        "Persistent update settings in the browser settings UI."
+      ]
+    },
+    {
+      "type": "Security Updates",
+      "items": [
+        "Signed/integrity-checked update workflow through Electron Auto Updater."
+      ]
+    }
+  ],
+  "downloadUrl": "https://updates.adventurebrowser.app/adventure-browser-2.9.9.dmg",
+  "fileSize": 32140528,
+  "checksum": "sha256-placeholder-for-production-server",
+  "signature": "production-placeholder-signature"
+}
